@@ -104,14 +104,15 @@ def screenshot_processing(path):
 
 
 def get_text_from_image(image, mode):
-    image = cv.medianBlur(cv.cvtColor(image, cv.COLOR_BGR2GRAY), 5)
+    bw_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    # image = cv.medianBlur(cv.cvtColor(image, cv.COLOR_BGR2GRAY), 3)
     # convert o black and white
-    image = cv.threshold(image, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)[1]
+    # image = cv.threshold(image, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)[1]
 
     if mode == "grid":
         l = []
         # Get the dimensions of the image
-        height, width = image.shape
+        height, width = bw_image.shape
 
         # Define the size of the subimages
         subimage_height, subimage_width = height // 15, width // 15
@@ -134,19 +135,57 @@ def get_text_from_image(image, mode):
                 # Append the subimage to the list
                 subimages.append(subimage)
         i = 0
+        custom_config = r'--psm 10 --oem 3 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         for sub in subimages:
             # cv.imwrite('Test_screenshot_cell.png', cell)
+            print(sub)
+            # TODO: check for empty cells/ cells with color that isnt black or white
+            # if sub is empty, add "" to the list, else add the text, test color (remeber to swutch RGB order)
+            break
             sub = cv.medianBlur(sub, 5)
-            text = tess.image_to_string(sub,
-                                        config='--psm 10 --oem 3 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-            # print(text)
-            # save the subset image as a png
-            cv.imwrite(f'cells/Test_screenshot_cell{i}.png', sub)
+            text = tess.image_to_string(sub, config=custom_config)
+            #     # print(text)
+            #     # save the subset image as a png
+            # cv.imwrite(f'cells/Test_screenshot_cell{i}.png', sub)
             i += 1
             l.append(text)
-        print(l)
+        # print(l)
+    return l
 
 
 if __name__ == '__main__':
     grid, letters = screenshot_processing('Test_screenshot.jpg')
-    get_text_from_image(grid, "grid")
+    new_grid = get_text_from_image(grid, "grid")
+
+correct_grid = ["TL", "", "", "", "TW", "", "", "DL", "", "", "TW", "", "", "", "TL",
+                "", "DL", "", "", "", "TL", "", "", "", "TL", "", "", "", "DL", "",
+                "", "", "DW", "", "", "", "DL", "", "DL", "", "", "", "DW", "", "M",
+                "", "", "", "TL", "", "", "", "DW", "", "", "", "TL", "", "L", "A",
+                "TW", "", "", "", "DW", "", "DL", "", "DL", "", "H", "", "M", "I", "X",
+                "", "TL", "", "", "", "TL", "", "", "", "Q", "I", "S", "", "B", "",
+                "", "", "DL", "", "DL", "", "", "", "", "A", "R", "", "DL", "E", "",
+                "DL", "", "", "DW", "", "", "", "C", "I", "T", "E", "DW", "", "R", "E",
+                "", "", "DL", "", "DL", "", "", "I", "", "", "DL", "", "Y", "", "N",
+                "", "TL", "", "", "", "W", "A", "G", "E", "R", "", "L", "E", "A", "D",
+                "TW", "", "", "", "DW", "", "H", "A", "DL", "", "DW", "", "N", "", "O",
+                "", "", "", "TL", "", "", "", "R", "U", "S", "H", "TL", "S", "", "R",
+                "", "", "DW", "", "", "", "V", "I", "T", "T", "A", "", "A", "N", "T", "E",
+                "TL", "", "", "", "TW", "", "", "DL", "", "P", "I", "G", "", "", "TL"]
+
+count = 0
+for i in range(len(correct_grid)):
+    if correct_grid[i] != new_grid[i].strip():
+        print(i)
+        if correct_grid[i] == "":
+            print("empty")
+        else:
+            print(correct_grid[i])
+
+        if new_grid[i] == "":
+            print("empty")
+        else:
+            print(new_grid[i])
+        print("-----")
+        count += 1
+
+print(count)
